@@ -32,38 +32,38 @@ export interface SensorDataEntry {
 export const apiKeys = new Map<string, ApiKeyData>()
 export const sensorData = new Map<string, SensorDataEntry[]>()
 
-// Initialize with default API keys for all 6 stations
-apiKeys.set('vsr_st001_abc123def456', { 
+// Initialize with default API keys for all 6 stations with proper format
+apiKeys.set('vsr_st001_a1b2c3d4e5f6789012345678901234567890abcd', { 
   stationId: 'ST001', 
   lastUsed: new Date(), 
   status: 'active', 
   createdAt: new Date() 
 })
-apiKeys.set('vsr_st002_xyz789ghi012', { 
+apiKeys.set('vsr_st002_b2c3d4e5f6789012345678901234567890abcdef', { 
   stationId: 'ST002', 
   lastUsed: new Date(), 
   status: 'active', 
   createdAt: new Date() 
 })
-apiKeys.set('vsr_st003_mno345pqr678', { 
+apiKeys.set('vsr_st003_c3d4e5f6789012345678901234567890abcdef12', { 
   stationId: 'ST003', 
   lastUsed: new Date(), 
   status: 'active', 
   createdAt: new Date() 
 })
-apiKeys.set('vsr_st004_stu901vwx234', { 
+apiKeys.set('vsr_st004_d4e5f6789012345678901234567890abcdef1234', { 
   stationId: 'ST004', 
   lastUsed: new Date(), 
   status: 'active', 
   createdAt: new Date() 
 })
-apiKeys.set('vsr_st005_lmn567opq890', { 
+apiKeys.set('vsr_st005_e5f6789012345678901234567890abcdef123456', { 
   stationId: 'ST005', 
   lastUsed: new Date(), 
   status: 'active', 
   createdAt: new Date() 
 })
-apiKeys.set('vsr_st006_rst123uvw456', { 
+apiKeys.set('vsr_st006_f6789012345678901234567890abcdef12345678', { 
   stationId: 'ST006', 
   lastUsed: new Date(), 
   status: 'active', 

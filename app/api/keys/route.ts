@@ -6,8 +6,7 @@ export async function GET(request: NextRequest) {
   try {
     // Get all API keys for the dashboard
     const keysArray = Array.from(apiKeys.entries()).map(([key, data]) => ({
-      key: key.substring(0, 10) + '...', // Partial key for security
-      fullKey: key,
+      key: key, // Return full key for settings page
       stationId: data.stationId,
       status: data.status,
       lastUsed: data.lastUsed,

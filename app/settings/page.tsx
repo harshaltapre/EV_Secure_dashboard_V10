@@ -111,22 +111,15 @@ export default function SettingsPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ key: currentKey }),
+        body: JSON.stringify({ key: keyData.key }),
       })
 
       if (!response.ok) {
         throw new Error('Failed to revoke API key')
       }
 
-      setApiKeys((prev) => ({
-        ...prev,
-        [stationId]: {
-          ...prev[stationId],
-          key: "",
-          status: "inactive" as const,
-          lastUsed: null,
-        },
-      }))
+      // Refresh the API keys data
+      await refreshAPIKeys()
 
       alert(`API key revoked successfully for ${stationId}`)
     } catch (error) {
@@ -228,7 +221,7 @@ export default function SettingsPage() {
                             <div className="flex-1 min-w-0">
                               <Input
                                 type={showApiKeys[stationId] ? "text" : "password"}
-                                value={config.key}
+                                value={showApiKeys[stationId] ? config.key : `${config.key.substring(0, 10)}...`}
                                 readOnly
                                 className="bg-white/50 text-sm font-mono"
                               />
