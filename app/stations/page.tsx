@@ -332,9 +332,13 @@ export default function StationsPage() {
                   <div className="text-xs text-blue-600">Real Hardware</div>
                 </div>
               </div>
-              {stations.filter(s => s.esp32Status === "connected").length === 0 && (
+              {stations.filter(s => s.esp32Status === "connected").length === 0 ? (
                 <div className="mt-3 p-2 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-800">
                   ⚡ Upload Arduino code to your ESP32-S3 devices to see live sensor data
+                </div>
+              ) : (
+                <div className="mt-3 p-2 bg-green-50 border border-green-200 rounded text-sm text-green-800">
+                  ✅ ESP32 devices connected and sending real-time data
                 </div>
               )}
             </CardContent>
