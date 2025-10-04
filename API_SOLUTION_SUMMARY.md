@@ -51,7 +51,7 @@ All endpoints are working correctly:
 ### `credentials.h`
 ```cpp
 #define DASHBOARD_URL "https://ev-secure-dashboard-v2-grf2.vercel.app"
-#define API_KEY "vsr_st001_abc123def456"
+#define API_KEY "vsr_st001_a1b2c3d4e5f6789012345678901234567890abcd"
 // Alternative endpoints available for testing
 ```
 

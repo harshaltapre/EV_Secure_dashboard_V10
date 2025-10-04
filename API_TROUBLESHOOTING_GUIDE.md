@@ -73,7 +73,7 @@ Check Vercel deployment logs for incoming requests and errors.
 **Solutions:**
 1. Verify API key matches exactly:
    ```cpp
-   #define API_KEY "vsr_st001_abc123def456"
+   #define API_KEY "vsr_st001_a1b2c3d4e5f6789012345678901234567890abcd"
    ```
 
 2. Check API key in dashboard:

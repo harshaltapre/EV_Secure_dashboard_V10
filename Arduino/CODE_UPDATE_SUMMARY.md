@@ -74,7 +74,7 @@ Edit `credentials.h`:
 #### Verify API Configuration
 The API key is already configured to match the dashboard:
 ```cpp
-#define API_KEY "vsr_st001_abc123def456"
+#define API_KEY "vsr_st001_a1b2c3d4e5f6789012345678901234567890abcd"
 #define DEVICE_ID "ST001"
 ```
 
@@ -172,7 +172,7 @@ Use Serial Monitor commands:
 ## 📝 Notes
 
 - The system is designed to work with the hosted dashboard at: https://ev-secure-dashboard-v2-grf2.vercel.app
-- API key `vsr_st001_abc123def456` is pre-configured for station ST001
+- API key `vsr_st001_a1b2c3d4e5f6789012345678901234567890abcd` is pre-configured for station ST001
 - All pin assignments now match the Hardware Wiring Guide exactly
 - The code is optimized for ESP32-S3 and should compile without errors
 
