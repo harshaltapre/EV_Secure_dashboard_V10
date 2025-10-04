@@ -116,15 +116,21 @@ bool SimpleDataTransmitter::_makeRequest(const String& endpoint, const String& m
   String url = DASHBOARD_URL + endpoint;
   
   _log("Making request to: " + url);
+  _log("API Key: " + String(API_KEY).substring(0, 20) + "...");
+  _log("Data: " + jsonData.substring(0, 100) + "...");
   
-  // Configure HTTP client
+  // Configure HTTP client with proper SSL
+  _secureClient.setInsecure(); // For development - use proper certificates in production
+  _secureClient.setTimeout(15000);
+  
   _httpClient.begin(_secureClient, url);
-  _httpClient.setTimeout(10000);
+  _httpClient.setTimeout(15000);
   
-  // Set headers
+  // Set headers exactly as the working test
   _httpClient.addHeader("Content-Type", "application/json");
   _httpClient.addHeader("Authorization", "Bearer " + String(API_KEY));
   _httpClient.addHeader("User-Agent", "EV-Secure-ESP32/1.0.0");
+  _httpClient.addHeader("Accept", "application/json");
   
   // Make request
   int httpCode = 0;
@@ -140,10 +146,12 @@ bool SimpleDataTransmitter::_makeRequest(const String& endpoint, const String& m
   _log("Response code: " + String(httpCode));
   _log("Response: " + response);
   
-  if (httpCode > 0 && httpCode < 400) {
+  if (httpCode == 200) {
+    _log("✅ Data transmission successful!");
     return true;
   } else {
     _lastError = "HTTP " + String(httpCode) + ": " + response;
+    _log("❌ Data transmission failed: " + _lastError);
     return false;
   }
 }

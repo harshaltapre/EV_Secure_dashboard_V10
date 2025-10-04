@@ -481,6 +481,15 @@ void sendToDashboard() {
     }
   }
   
+  Serial.println("📡 Sending data to dashboard...");
+  Serial.println("📊 Sensor Data: V=" + String(currentSensorData.voltage) + 
+                 "V, I=" + String(currentSensorData.current) + 
+                 "A, P=" + String(currentSensorData.power) + "W");
+  Serial.println("🤖 ML Prediction: " + String(mlResult.prediction) + 
+                 " (Confidence: " + String(mlResult.confidence) + ")");
+  Serial.println("🔋 Charging: " + String(isCharging ? "YES" : "NO"));
+  Serial.println("⚠️ Threat: " + String(threatDetected ? "DETECTED" : "NONE"));
+  
   // Initialize transmission method if not done
   if (!transmissionMethodInitialized) {
     initializeTransmissionMethod();
@@ -492,37 +501,37 @@ void sendToDashboard() {
   // Try different transmission methods based on current method
   switch (currentTransmissionMethod) {
     case TRANSMISSION_HTTP_API:
-      Serial.println("Attempting HTTP API transmission...");
+      Serial.println("🌐 Attempting HTTP API transmission...");
       success = APIManagerImproved::sendData(_createJsonPayload());
       if (!success) {
         errorMessage = APIManagerImproved::getLastError();
-        Serial.println("HTTP API failed: " + errorMessage);
+        Serial.println("❌ HTTP API failed: " + errorMessage);
         switchTransmissionMethod(TRANSMISSION_SIMPLE_HTTP);
       }
       break;
       
     case TRANSMISSION_SIMPLE_HTTP:
-      Serial.println("Attempting Simple HTTP transmission...");
+      Serial.println("🌐 Attempting Simple HTTP transmission...");
       success = SimpleDataTransmitter::sendSensorData(currentSensorData, mlResult, isCharging, threatDetected);
       if (!success) {
         errorMessage = SimpleDataTransmitter::getLastError();
-        Serial.println("Simple HTTP failed: " + errorMessage);
+        Serial.println("❌ Simple HTTP failed: " + errorMessage);
         switchTransmissionMethod(TRANSMISSION_MQTT);
       }
       break;
       
     case TRANSMISSION_MQTT:
-      Serial.println("Attempting MQTT transmission...");
+      Serial.println("📡 Attempting MQTT transmission...");
       success = MQTTTransmitter::sendSensorData(currentSensorData, mlResult, isCharging, threatDetected);
       if (!success) {
         errorMessage = MQTTTransmitter::getLastError();
-        Serial.println("MQTT failed: " + errorMessage);
+        Serial.println("❌ MQTT failed: " + errorMessage);
         switchTransmissionMethod(TRANSMISSION_FALLBACK);
       }
       break;
       
     case TRANSMISSION_FALLBACK:
-      Serial.println("Using fallback transmission (local storage only)...");
+      Serial.println("💾 Using fallback transmission (local storage only)...");
       // Store data locally for later transmission
       SDLogger::logSensorData(currentSensorData);
       SDLogger::logMLPrediction(mlResult);
@@ -531,10 +540,11 @@ void sendToDashboard() {
   }
   
   if (success) {
-    Serial.println("✓ Data transmission successful using method: " + String(currentTransmissionMethod));
+    Serial.println("✅ Data transmission successful using method: " + String(currentTransmissionMethod));
+    Serial.println("🌐 Check dashboard: https://ev-secure-dashboard-v10.vercel.app/stations");
   } else {
-    Serial.println("✗ All transmission methods failed");
-    Serial.println("Last error: " + errorMessage);
+    Serial.println("❌ All transmission methods failed");
+    Serial.println("❌ Last error: " + errorMessage);
   }
 }
 

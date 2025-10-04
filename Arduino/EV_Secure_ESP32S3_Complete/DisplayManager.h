@@ -13,19 +13,27 @@
  #include <Adafruit_ST7735.h>
  #include <SPI.h>
  
- // Display colors (ST7735 color format)
- #define COLOR_BLACK    0x0000
- #define COLOR_WHITE    0xFFFF
- #define COLOR_RED      0xF800
- #define COLOR_GREEN    0x07E0
- #define COLOR_BLUE     0x001F
- #define COLOR_YELLOW   0xFFE0
- #define COLOR_CYAN     0x07FF
- #define COLOR_MAGENTA  0xF81F
- #define COLOR_ORANGE   0xFC00
- #define COLOR_PURPLE   0x8000
- #define COLOR_GRAY     0x8410
- #define COLOR_DARK_GRAY 0x4208
+// Display colors (ST7735 color format) - Enhanced for reference image
+#define COLOR_BLACK    0x0000
+#define COLOR_WHITE    0xFFFF
+#define COLOR_RED      0xF800
+#define COLOR_GREEN    0x07E0
+#define COLOR_BLUE     0x001F
+#define COLOR_YELLOW   0xFFE0
+#define COLOR_CYAN     0x07FF
+#define COLOR_MAGENTA  0xF81F
+#define COLOR_ORANGE   0xFC00
+#define COLOR_PURPLE   0x8000
+#define COLOR_GRAY     0x8410
+#define COLOR_DARK_GRAY 0x4208
+
+// Custom colors for reference image theme
+#define COLOR_DARK_BLUE    0x0010  // Dark blue background
+#define COLOR_DARKER_BLUE  0x001F  // Darker blue for headers
+#define COLOR_LIGHT_BLUE   0x041F  // Light blue accents
+#define COLOR_BRIGHT_GREEN 0x07E0  // Bright green for operational status
+#define COLOR_PIXEL_GREEN  0x07E0  // Pixelated green
+#define COLOR_PIXEL_CYAN   0x07FF  // Pixelated cyan
  
  // Display layout constants
  #define HEADER_HEIGHT 20
@@ -69,13 +77,14 @@
    static bool _lastChargingState;
    static bool _lastThreatState;
    
-   // Display methods
-   static void _drawHeader(const String& sessionId, SystemState state);
-   static void _drawSensorData(const SensorData& sensorData);
-   static void _drawMLPrediction(const MLPrediction& mlResult, bool threatDetected);
-   static void _drawStatusBar(bool isCharging, bool threatDetected, bool wifiConnected);
-   static void _drawSystemState(SystemState state);
-   static void _drawThreatIndicator(bool threatDetected, float confidence);
+  // Display methods
+  static void _drawCleanLayout(const SensorData& sensorData, const MLPrediction& mlResult, SystemState systemState, bool isCharging, bool threatDetected, const String& sessionId);
+  static void _drawHeader(const String& sessionId, SystemState state);
+  static void _drawSensorData(const SensorData& sensorData);
+  static void _drawMLPrediction(const MLPrediction& mlResult, bool threatDetected);
+  static void _drawStatusBar(bool isCharging, bool threatDetected, bool wifiConnected);
+  static void _drawSystemState(SystemState state);
+  static void _drawThreatIndicator(bool threatDetected, float confidence);
    
    // Helper methods
    static void _drawText(int x, int y, const String& text, uint16_t color = COLOR_WHITE, uint8_t size = 1);
@@ -141,19 +150,11 @@ void DisplayManager::updateDisplay(const SensorData& sensorData,
     return;
   }
   
-  // Always clear screen to prevent overlapping
+  // Always clear screen completely to prevent overlapping
   clearScreen();
   
-  // Draw display elements with proper layout
-  _drawHeader(sessionId, systemState);
-  _drawSensorData(sensorData);
-  _drawMLPrediction(mlResult, threatDetected);
-  _drawStatusBar(isCharging, threatDetected, WiFi.status() == WL_CONNECTED);
-  
-  // Draw threat indicator if threat detected
-  if (threatDetected) {
-    _drawThreatIndicator(threatDetected, mlResult.confidence);
-  }
+  // Draw clean layout matching reference image
+  _drawCleanLayout(sensorData, mlResult, systemState, isCharging, threatDetected, sessionId);
   
   // Update state tracking
   _lastUpdate = currentTime;
@@ -239,9 +240,110 @@ void DisplayManager::updateDisplay(const SensorData& sensorData,
    return _initialized;
  }
  
- // Private methods implementation
- 
- void DisplayManager::_drawHeader(const String& sessionId, SystemState state) {
+// Private methods implementation
+
+void DisplayManager::_drawCleanLayout(const SensorData& sensorData, const MLPrediction& mlResult, SystemState systemState, bool isCharging, bool threatDetected, const String& sessionId) {
+  // Clear entire screen with dark blue background
+  _tft->fillScreen(0x0010); // Dark blue background
+  
+  // Header Bar - Top section
+  _tft->fillRect(0, 0, TFT_WIDTH, 18, 0x001F); // Darker blue header
+  _tft->drawRect(0, 0, TFT_WIDTH, 18, COLOR_CYAN); // Border
+  
+  // Connectivity Icon (top-left)
+  _drawText(2, 2, "📶", COLOR_GREEN, 1);
+  
+  // Device ID (center)
+  _drawText(15, 2, "SESS_" + sessionId.substring(0, 6), COLOR_WHITE, 1);
+  
+  // Primary Status (top-right)
+  String statusText = threatDetected ? "LOCKDOWN" : (isCharging ? "ACTIVE" : "IDLE");
+  uint16_t statusColor = threatDetected ? COLOR_RED : (isCharging ? COLOR_CYAN : COLOR_GRAY);
+  _drawText(TFT_WIDTH - (statusText.length() * 6) - 2, 2, statusText, statusColor, 1);
+  
+  // Main Grid Layout - Two column design
+  int leftX = 2;
+  int rightX = TFT_WIDTH/2 + 2;
+  int startY = 22;
+  int boxHeight = 20;
+  int boxSpacing = 2;
+  
+  // Left Column Boxes
+  // Box 1: Voltage & Current
+  _tft->fillRect(leftX, startY, TFT_WIDTH/2 - 4, boxHeight, 0x0010);
+  _tft->drawRect(leftX, startY, TFT_WIDTH/2 - 4, boxHeight, COLOR_CYAN);
+  _drawText(leftX + 2, startY + 2, "V: " + _formatFloat(sensorData.voltage, 1) + "V", COLOR_GREEN, 1);
+  _drawText(leftX + 2, startY + 12, "⚡" + _formatFloat(sensorData.current, 1) + "A", COLOR_YELLOW, 1);
+  
+  // Box 2: Current/Power
+  _tft->fillRect(leftX, startY + boxHeight + boxSpacing, TFT_WIDTH/2 - 4, boxHeight, 0x0010);
+  _tft->drawRect(leftX, startY + boxHeight + boxSpacing, TFT_WIDTH/2 - 4, boxHeight, COLOR_CYAN);
+  _drawText(leftX + 2, startY + boxHeight + boxSpacing + 2, "CURRENT", COLOR_WHITE, 1);
+  _drawText(leftX + 2, startY + boxHeight + boxSpacing + 12, _formatFloat(sensorData.power, 1) + "W", COLOR_WHITE, 1);
+  
+  // Box 3: Temperature
+  _tft->fillRect(leftX, startY + (boxHeight + boxSpacing) * 2, TFT_WIDTH/2 - 4, boxHeight, 0x0010);
+  _tft->drawRect(leftX, startY + (boxHeight + boxSpacing) * 2, TFT_WIDTH/2 - 4, boxHeight, COLOR_CYAN);
+  _drawText(leftX + 2, startY + (boxHeight + boxSpacing) * 2 + 2, "TEMP", COLOR_WHITE, 1);
+  _drawText(leftX + 2, startY + (boxHeight + boxSpacing) * 2 + 12, _formatFloat(sensorData.temperature, 1) + "C", COLOR_WHITE, 1);
+  
+  // Right Column Boxes
+  // Box 4: Operational Status
+  _tft->fillRect(rightX, startY, TFT_WIDTH/2 - 4, boxHeight, 0x0010);
+  _tft->drawRect(rightX, startY, TFT_WIDTH/2 - 4, boxHeight, COLOR_CYAN);
+  _drawText(rightX + 2, startY + 2, "STATUS", COLOR_WHITE, 1);
+  String opStatus = threatDetected ? "BLOCKED" : "OPERATIONAL";
+  uint16_t opColor = threatDetected ? COLOR_RED : COLOR_GREEN;
+  _drawText(rightX + 2, startY + 12, opStatus, opColor, 1);
+  
+  // Box 5: Network
+  _tft->fillRect(rightX, startY + boxHeight + boxSpacing, TFT_WIDTH/2 - 4, boxHeight, 0x0010);
+  _tft->drawRect(rightX, startY + boxHeight + boxSpacing, TFT_WIDTH/2 - 4, boxHeight, COLOR_CYAN);
+  _drawText(rightX + 2, startY + boxHeight + boxSpacing + 2, "NETWORK", COLOR_WHITE, 1);
+  _drawText(rightX + 2, startY + boxHeight + boxSpacing + 12, "F: " + _formatFloat(sensorData.frequency, 0) + "Hz", COLOR_WHITE, 1);
+  
+  // Box 6: Configuration & ML
+  _tft->fillRect(rightX, startY + (boxHeight + boxSpacing) * 2, TFT_WIDTH/2 - 4, boxHeight, 0x0010);
+  _tft->drawRect(rightX, startY + (boxHeight + boxSpacing) * 2, TFT_WIDTH/2 - 4, boxHeight, COLOR_CYAN);
+  _drawText(rightX + 2, startY + (boxHeight + boxSpacing) * 2 + 2, "CONF: " + String(mlResult.confidence, 2), COLOR_WHITE, 1);
+  _drawText(rightX + 2, startY + (boxHeight + boxSpacing) * 2 + 12, "ML: " + String(mlResult.prediction, 2), COLOR_WHITE, 1);
+  
+  // Additional Network Info Box
+  _tft->fillRect(leftX, startY + (boxHeight + boxSpacing) * 3, TFT_WIDTH - 4, boxHeight, 0x0010);
+  _tft->drawRect(leftX, startY + (boxHeight + boxSpacing) * 3, TFT_WIDTH - 4, boxHeight, COLOR_CYAN);
+  _drawText(leftX + 2, startY + (boxHeight + boxSpacing) * 3 + 2, "RSSI: " + String(WiFi.RSSI()) + " dBm", COLOR_CYAN, 1);
+  _drawText(leftX + 2, startY + (boxHeight + boxSpacing) * 3 + 12, "HEALTH: " + String(100 - (mlResult.prediction * 100), 0) + "%", COLOR_GREEN, 1);
+  
+  // Footer Bar
+  _tft->fillRect(0, TFT_HEIGHT - 15, TFT_WIDTH, 15, 0x001F);
+  _tft->drawRect(0, TFT_HEIGHT - 15, TFT_WIDTH, 15, COLOR_CYAN);
+  
+  // Connection Type (left)
+  _drawText(2, TFT_HEIGHT - 13, "WiFi", WiFi.status() == WL_CONNECTED ? COLOR_GREEN : COLOR_RED, 1);
+  
+  // Time Display (center)
+  String timeStr = _getCurrentTime();
+  int timeWidth = timeStr.length() * 6;
+  int timeX = (TFT_WIDTH - timeWidth) / 2;
+  _drawText(timeX, TFT_HEIGHT - 13, timeStr, COLOR_WHITE, 1);
+  
+  // Alert Indicator (right)
+  if (threatDetected) {
+    _tft->fillRect(TFT_WIDTH - 30, TFT_HEIGHT - 13, 28, 10, COLOR_RED);
+    _drawText(TFT_WIDTH - 28, TFT_HEIGHT - 12, "ALERT", COLOR_WHITE, 1);
+  } else {
+    _drawText(TFT_WIDTH - 15, TFT_HEIGHT - 13, "OK", COLOR_GREEN, 1);
+  }
+  
+  // Draw threat border if threat detected
+  if (threatDetected) {
+    uint16_t borderColor = (millis() / 500) % 2 ? COLOR_RED : COLOR_DARK_GRAY;
+    _tft->drawRect(0, 0, TFT_WIDTH, TFT_HEIGHT, borderColor);
+    _tft->drawRect(1, 1, TFT_WIDTH-2, TFT_HEIGHT-2, borderColor);
+  }
+}
+
+void DisplayManager::_drawHeader(const String& sessionId, SystemState state) {
    // Draw session ID
    _drawText(2, 2, "ID: " + sessionId.substring(0, 8), COLOR_CYAN, 1);
    
