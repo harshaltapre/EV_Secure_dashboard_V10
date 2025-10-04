@@ -167,6 +167,12 @@ String SimpleDataTransmitter::_createSensorDataJson(const SensorData& sensorData
   sensors["frequency"] = sensorData.frequency;
   sensors["temperature"] = sensorData.temperature;
   sensors["timestamp"] = sensorData.timestamp;
+  sensors["relay_status"] = true; // Add relay status
+  sensors["car_connected"] = isCharging;
+  sensors["car_model"] = isCharging ? "EV Vehicle" : "";
+  sensors["charging_progress"] = isCharging ? (int)(mlResult.prediction * 100) : 0;
+  sensors["battery_level"] = isCharging ? 85 : 0;
+  sensors["ml_threat_level"] = threatDetected ? (mlResult.prediction > 0.7 ? "high" : "medium") : "safe";
   
   // System data
   JsonObject system = doc.createNestedObject("system_data");

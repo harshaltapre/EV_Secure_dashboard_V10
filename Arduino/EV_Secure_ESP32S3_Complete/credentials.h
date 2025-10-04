@@ -16,7 +16,7 @@
 // DASHBOARD API CONFIGURATION
 // ============================================================================
 // Primary dashboard URL and API key (ensure these match your deployed backend)
-#define DASHBOARD_URL "https://ev-secure-dashboard-v5.vercel.app"  // Your hosted dashboard URL (v5)
+#define DASHBOARD_URL "https://ev-secure-dashboard-v10.vercel.app"  // Your hosted dashboard URL (v10)
 #define API_KEY "vsr_st001_a1b2c3d4e5f6789012345678901234567890abcd"       // Your station API key (ST001)
 
 // Alternate dashboard URLs (used automatically as fallbacks in code)

@@ -125,55 +125,42 @@
    return true;
  }
  
- void DisplayManager::updateDisplay(const SensorData& sensorData, 
-                                   const MLPrediction& mlResult,
-                                   SystemState systemState,
-                                   bool isCharging,
-                                   bool threatDetected,
-                                   const String& sessionId) {
-   if (!_initialized) {
-     return;
-   }
-   
-   // Check if update is needed
-   unsigned long currentTime = millis();
-   if (currentTime - _lastUpdate < DISPLAY_UPDATE_INTERVAL) {
-     return;
-   }
-   
-   // Clear screen if state changed significantly
-   bool needsFullRedraw = (
-     sessionId != _lastSessionId ||
-     isCharging != _lastChargingState ||
-     threatDetected != _lastThreatState ||
-     systemState == STATE_LOCKDOWN ||
-     systemState == STATE_ERROR
-   );
-   
-   if (needsFullRedraw) {
-     clearScreen();
-   }
-   
-  // Clear regions to avoid text overlap/ghosting
-  // Header region
-  _tft->fillRect(0, 0, TFT_WIDTH, HEADER_HEIGHT, COLOR_BLACK);
-  // Content region
-  _tft->fillRect(0, HEADER_HEIGHT, TFT_WIDTH, CONTENT_HEIGHT, COLOR_BLACK);
-  // Status bar region
-  _tft->fillRect(0, TFT_HEIGHT - STATUS_BAR_HEIGHT, TFT_WIDTH, STATUS_BAR_HEIGHT, COLOR_BLACK);
-
-  // Draw display elements after clearing
+void DisplayManager::updateDisplay(const SensorData& sensorData, 
+                                  const MLPrediction& mlResult,
+                                  SystemState systemState,
+                                  bool isCharging,
+                                  bool threatDetected,
+                                  const String& sessionId) {
+  if (!_initialized) {
+    return;
+  }
+  
+  // Check if update is needed
+  unsigned long currentTime = millis();
+  if (currentTime - _lastUpdate < DISPLAY_UPDATE_INTERVAL) {
+    return;
+  }
+  
+  // Always clear screen to prevent overlapping
+  clearScreen();
+  
+  // Draw display elements with proper layout
   _drawHeader(sessionId, systemState);
   _drawSensorData(sensorData);
   _drawMLPrediction(mlResult, threatDetected);
   _drawStatusBar(isCharging, threatDetected, WiFi.status() == WL_CONNECTED);
-   
-   // Update state tracking
-   _lastUpdate = currentTime;
-   _lastSessionId = sessionId;
-   _lastChargingState = isCharging;
-   _lastThreatState = threatDetected;
- }
+  
+  // Draw threat indicator if threat detected
+  if (threatDetected) {
+    _drawThreatIndicator(threatDetected, mlResult.confidence);
+  }
+  
+  // Update state tracking
+  _lastUpdate = currentTime;
+  _lastSessionId = sessionId;
+  _lastChargingState = isCharging;
+  _lastThreatState = threatDetected;
+}
  
  void DisplayManager::showStartupScreen() {
    if (!_initialized) {
@@ -267,85 +254,110 @@
    _tft->drawFastHLine(0, HEADER_HEIGHT - 1, TFT_WIDTH, COLOR_DARK_GRAY);
  }
  
- void DisplayManager::_drawSensorData(const SensorData& sensorData) {
-   int startY = HEADER_HEIGHT + 5;
-   
-   // Voltage
-   _drawText(2, startY, "V:", COLOR_WHITE, 1);
-   _drawText(20, startY, _formatFloat(sensorData.voltage, 1) + "V", COLOR_GREEN, 1);
-   
-   // Current
-   _drawText(2, startY + 15, "I:", COLOR_WHITE, 1);
-   _drawText(20, startY + 15, _formatFloat(sensorData.current, 2) + "A", COLOR_BLUE, 1);
-   
-   // Power
-   _drawText(2, startY + 30, "P:", COLOR_WHITE, 1);
-   _drawText(20, startY + 30, _formatFloat(sensorData.power, 1) + "W", COLOR_YELLOW, 1);
-   
-   // Frequency
-   _drawText(2, startY + 45, "F:", COLOR_WHITE, 1);
-   _drawText(20, startY + 45, _formatFloat(sensorData.frequency, 1) + "Hz", COLOR_CYAN, 1);
-   
-   // Temperature
-   _drawText(2, startY + 60, "T:", COLOR_WHITE, 1);
-   _drawText(20, startY + 60, _formatFloat(sensorData.temperature, 1) + "C", COLOR_MAGENTA, 1);
- }
+void DisplayManager::_drawSensorData(const SensorData& sensorData) {
+  int startY = HEADER_HEIGHT + 2;
+  int lineHeight = 12;
+  
+  // Clear sensor data area
+  _tft->fillRect(0, HEADER_HEIGHT, TFT_WIDTH, 80, COLOR_BLACK);
+  
+  // Voltage
+  _drawText(2, startY, "V:", COLOR_WHITE, 1);
+  _drawText(15, startY, _formatFloat(sensorData.voltage, 1) + "V", COLOR_GREEN, 1);
+  
+  // Current
+  _drawText(2, startY + lineHeight, "I:", COLOR_WHITE, 1);
+  _drawText(15, startY + lineHeight, _formatFloat(sensorData.current, 2) + "A", COLOR_BLUE, 1);
+  
+  // Power
+  _drawText(2, startY + (lineHeight * 2), "P:", COLOR_WHITE, 1);
+  _drawText(15, startY + (lineHeight * 2), _formatFloat(sensorData.power, 1) + "W", COLOR_YELLOW, 1);
+  
+  // Frequency
+  _drawText(2, startY + (lineHeight * 3), "F:", COLOR_WHITE, 1);
+  _drawText(15, startY + (lineHeight * 3), _formatFloat(sensorData.frequency, 1) + "Hz", COLOR_CYAN, 1);
+  
+  // Temperature
+  _drawText(2, startY + (lineHeight * 4), "T:", COLOR_WHITE, 1);
+  _drawText(15, startY + (lineHeight * 4), _formatFloat(sensorData.temperature, 1) + "C", COLOR_MAGENTA, 1);
+}
  
- void DisplayManager::_drawMLPrediction(const MLPrediction& mlResult, bool threatDetected) {
-   int startY = HEADER_HEIGHT + CONTENT_HEIGHT - 40;
-   
-   // ML Prediction - Fixed formatting to prevent apostrophe
-   _drawText(2, startY, "ML:", COLOR_WHITE, 1);
-   String predictionText = String(mlResult.prediction, 2); // Use 2 decimal places
-   uint16_t predictionColor = threatDetected ? COLOR_RED : COLOR_GREEN;
-   _drawText(20, startY, predictionText, predictionColor, 1);
-   
-   // Confidence - Fixed formatting
-   _drawText(2, startY + 15, "Conf:", COLOR_WHITE, 1);
-   String confidenceText = String(mlResult.confidence, 2); // Use 2 decimal places
-   _drawText(35, startY + 15, confidenceText, COLOR_YELLOW, 1);
-   
-   // Threat indicator
-   if (threatDetected) {
-     _drawText(TFT_WIDTH - 30, startY, "!", COLOR_RED, 2);
-   }
- }
+void DisplayManager::_drawMLPrediction(const MLPrediction& mlResult, bool threatDetected) {
+  int startY = HEADER_HEIGHT + 65; // Fixed position below sensor data
+  
+  // Clear ML area
+  _tft->fillRect(0, startY - 2, TFT_WIDTH, 25, COLOR_BLACK);
+  
+  // ML Prediction with better formatting
+  _drawText(2, startY, "ML:", COLOR_WHITE, 1);
+  String predictionText = String(mlResult.prediction, 2);
+  uint16_t predictionColor = threatDetected ? COLOR_RED : COLOR_GREEN;
+  _drawText(20, startY, predictionText, predictionColor, 1);
+  
+  // Confidence
+  _drawText(2, startY + 12, "Conf:", COLOR_WHITE, 1);
+  String confidenceText = String(mlResult.confidence, 2);
+  _drawText(35, startY + 12, confidenceText, COLOR_YELLOW, 1);
+  
+  // Threat status
+  if (threatDetected) {
+    _drawText(70, startY, "THREAT!", COLOR_RED, 1);
+    _drawText(70, startY + 12, "BLOCKED", COLOR_RED, 1);
+  } else {
+    _drawText(70, startY, "SECURE", COLOR_GREEN, 1);
+    _drawText(70, startY + 12, "NORMAL", COLOR_GREEN, 1);
+  }
+}
  
- void DisplayManager::_drawStatusBar(bool isCharging, bool threatDetected, bool wifiConnected) {
-   int startY = TFT_HEIGHT - STATUS_BAR_HEIGHT;
-   
-   // WiFi indicator
-   _drawText(2, startY, wifiConnected ? "WiFi" : "NoWiFi", 
-            wifiConnected ? COLOR_GREEN : COLOR_RED, 1);
-   
-   // Time display (center)
-   String timeStr = _getCurrentTime();
-   int timeWidth = timeStr.length() * 6; // Approximate character width
-   int timeX = (TFT_WIDTH - timeWidth) / 2;
-   _drawText(timeX, startY, timeStr, COLOR_WHITE, 1);
-   
-   // Charging indicator
-   _drawText(40, startY, isCharging ? "CHG" : "IDLE", 
-            isCharging ? COLOR_BLUE : COLOR_GRAY, 1);
-   
-   // Alert indicator
-   if (threatDetected) {
-     _drawText(TFT_WIDTH - 20, startY, "!", COLOR_RED, 1);
-   }
- }
+void DisplayManager::_drawStatusBar(bool isCharging, bool threatDetected, bool wifiConnected) {
+  int startY = TFT_HEIGHT - STATUS_BAR_HEIGHT;
+  
+  // Clear status bar area
+  _tft->fillRect(0, startY, TFT_WIDTH, STATUS_BAR_HEIGHT, COLOR_BLACK);
+  
+  // WiFi indicator with signal strength
+  String wifiText = wifiConnected ? "WiFi" : "NoWiFi";
+  uint16_t wifiColor = wifiConnected ? COLOR_GREEN : COLOR_RED;
+  _drawText(2, startY, wifiText, wifiColor, 1);
+  
+  // Charging status
+  String chargeText = isCharging ? "CHG" : "IDLE";
+  uint16_t chargeColor = isCharging ? COLOR_BLUE : COLOR_GRAY;
+  _drawText(35, startY, chargeText, chargeColor, 1);
+  
+  // Time display (center)
+  String timeStr = _getCurrentTime();
+  int timeWidth = timeStr.length() * 6;
+  int timeX = (TFT_WIDTH - timeWidth) / 2;
+  _drawText(timeX, startY, timeStr, COLOR_WHITE, 1);
+  
+  // Threat alert indicator
+  if (threatDetected) {
+    _drawText(TFT_WIDTH - 25, startY, "ALERT", COLOR_RED, 1);
+  } else {
+    _drawText(TFT_WIDTH - 25, startY, "OK", COLOR_GREEN, 1);
+  }
+}
  
  void DisplayManager::_drawSystemState(SystemState state) {
    // This method can be used for more detailed state visualization
    // For now, state is shown in the header
  }
  
- void DisplayManager::_drawThreatIndicator(bool threatDetected, float confidence) {
-   if (threatDetected) {
-     // Draw a pulsing red indicator
-     uint16_t color = (millis() / 500) % 2 ? COLOR_RED : COLOR_DARK_GRAY;
-     _tft->fillCircle(TFT_WIDTH - 10, TFT_HEIGHT - 10, 5, color);
-   }
- }
+void DisplayManager::_drawThreatIndicator(bool threatDetected, float confidence) {
+  if (threatDetected) {
+    // Draw a pulsing red border around the entire screen
+    uint16_t color = (millis() / 500) % 2 ? COLOR_RED : COLOR_DARK_GRAY;
+    
+    // Draw border
+    _tft->drawRect(0, 0, TFT_WIDTH, TFT_HEIGHT, color);
+    _tft->drawRect(1, 1, TFT_WIDTH-2, TFT_HEIGHT-2, color);
+    
+    // Draw threat warning in center
+    _drawCenteredText(TFT_HEIGHT/2, "THREAT DETECTED!", COLOR_RED, 2);
+    _drawCenteredText(TFT_HEIGHT/2 + 20, "SYSTEM BLOCKED", COLOR_RED, 1);
+  }
+}
  
  // Helper methods
  
