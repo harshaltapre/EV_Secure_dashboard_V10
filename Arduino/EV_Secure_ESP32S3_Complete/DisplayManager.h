@@ -246,9 +246,9 @@ void DisplayManager::_drawCleanLayout(const SensorData& sensorData, const MLPred
   // Clear entire screen with dark blue background
   _tft->fillScreen(0x0010); // Dark blue background
   
-  // Header Bar - Top section
-  _tft->fillRect(0, 0, TFT_WIDTH, 18, 0x001F); // Darker blue header
-  _tft->drawRect(0, 0, TFT_WIDTH, 18, COLOR_CYAN); // Border
+  // Header Bar - Top section (compact)
+  _tft->fillRect(0, 0, TFT_WIDTH, 16, 0x001F); // Darker blue header
+  _tft->drawRect(0, 0, TFT_WIDTH, 16, COLOR_CYAN); // Border
   
   // Connectivity Icon (top-left)
   _drawText(2, 2, "📶", COLOR_GREEN, 1);
@@ -261,78 +261,77 @@ void DisplayManager::_drawCleanLayout(const SensorData& sensorData, const MLPred
   uint16_t statusColor = threatDetected ? COLOR_RED : (isCharging ? COLOR_CYAN : COLOR_GRAY);
   _drawText(TFT_WIDTH - (statusText.length() * 6) - 2, 2, statusText, statusColor, 1);
   
-  // Main Grid Layout - Two column design
+  // Main Grid Layout - Optimized for 128x160 display
   int leftX = 2;
   int rightX = TFT_WIDTH/2 + 2;
-  int startY = 22;
-  int boxHeight = 20;
-  int boxSpacing = 2;
+  int startY = 18; // Start right after header
+  int boxHeight = 18; // Reduced height
+  int boxSpacing = 1; // Reduced spacing
   
-  // Left Column Boxes
-  // Box 1: Voltage & Current
-  _tft->fillRect(leftX, startY, TFT_WIDTH/2 - 4, boxHeight, 0x0010);
-  _tft->drawRect(leftX, startY, TFT_WIDTH/2 - 4, boxHeight, COLOR_CYAN);
-  _drawText(leftX + 2, startY + 2, "V: " + _formatFloat(sensorData.voltage, 1) + "V", COLOR_GREEN, 1);
-  _drawText(leftX + 2, startY + 12, "⚡" + _formatFloat(sensorData.current, 1) + "A", COLOR_YELLOW, 1);
+  // Left Column Boxes - Sensor Data
+  // Box 1: Voltage & Current (combined)
+  _tft->fillRect(leftX, startY, TFT_WIDTH/2 - 3, boxHeight, 0x0010);
+  _tft->drawRect(leftX, startY, TFT_WIDTH/2 - 3, boxHeight, COLOR_CYAN);
+  _drawText(leftX + 2, startY + 2, "V:" + _formatFloat(sensorData.voltage, 1) + "V", COLOR_GREEN, 1);
+  _drawText(leftX + 2, startY + 12, "I:" + _formatFloat(sensorData.current, 1) + "A", COLOR_YELLOW, 1);
   
-  // Box 2: Current/Power
-  _tft->fillRect(leftX, startY + boxHeight + boxSpacing, TFT_WIDTH/2 - 4, boxHeight, 0x0010);
-  _tft->drawRect(leftX, startY + boxHeight + boxSpacing, TFT_WIDTH/2 - 4, boxHeight, COLOR_CYAN);
-  _drawText(leftX + 2, startY + boxHeight + boxSpacing + 2, "CURRENT", COLOR_WHITE, 1);
-  _drawText(leftX + 2, startY + boxHeight + boxSpacing + 12, _formatFloat(sensorData.power, 1) + "W", COLOR_WHITE, 1);
+  // Box 2: Power & Frequency
+  _tft->fillRect(leftX, startY + boxHeight + boxSpacing, TFT_WIDTH/2 - 3, boxHeight, 0x0010);
+  _tft->drawRect(leftX, startY + boxHeight + boxSpacing, TFT_WIDTH/2 - 3, boxHeight, COLOR_CYAN);
+  _drawText(leftX + 2, startY + boxHeight + boxSpacing + 2, "P:" + _formatFloat(sensorData.power, 1) + "W", COLOR_WHITE, 1);
+  _drawText(leftX + 2, startY + boxHeight + boxSpacing + 12, "F:" + _formatFloat(sensorData.frequency, 0) + "Hz", COLOR_CYAN, 1);
   
-  // Box 3: Temperature
-  _tft->fillRect(leftX, startY + (boxHeight + boxSpacing) * 2, TFT_WIDTH/2 - 4, boxHeight, 0x0010);
-  _tft->drawRect(leftX, startY + (boxHeight + boxSpacing) * 2, TFT_WIDTH/2 - 4, boxHeight, COLOR_CYAN);
-  _drawText(leftX + 2, startY + (boxHeight + boxSpacing) * 2 + 2, "TEMP", COLOR_WHITE, 1);
-  _drawText(leftX + 2, startY + (boxHeight + boxSpacing) * 2 + 12, _formatFloat(sensorData.temperature, 1) + "C", COLOR_WHITE, 1);
+  // Box 3: Temperature & Health
+  _tft->fillRect(leftX, startY + (boxHeight + boxSpacing) * 2, TFT_WIDTH/2 - 3, boxHeight, 0x0010);
+  _tft->drawRect(leftX, startY + (boxHeight + boxSpacing) * 2, TFT_WIDTH/2 - 3, boxHeight, COLOR_CYAN);
+  _drawText(leftX + 2, startY + (boxHeight + boxSpacing) * 2 + 2, "T:" + _formatFloat(sensorData.temperature, 1) + "C", COLOR_MAGENTA, 1);
+  _drawText(leftX + 2, startY + (boxHeight + boxSpacing) * 2 + 12, "H:" + String(100 - (mlResult.prediction * 100), 0) + "%", COLOR_GREEN, 1);
   
-  // Right Column Boxes
+  // Right Column Boxes - System Status
   // Box 4: Operational Status
-  _tft->fillRect(rightX, startY, TFT_WIDTH/2 - 4, boxHeight, 0x0010);
-  _tft->drawRect(rightX, startY, TFT_WIDTH/2 - 4, boxHeight, COLOR_CYAN);
+  _tft->fillRect(rightX, startY, TFT_WIDTH/2 - 3, boxHeight, 0x0010);
+  _tft->drawRect(rightX, startY, TFT_WIDTH/2 - 3, boxHeight, COLOR_CYAN);
   _drawText(rightX + 2, startY + 2, "STATUS", COLOR_WHITE, 1);
   String opStatus = threatDetected ? "BLOCKED" : "OPERATIONAL";
   uint16_t opColor = threatDetected ? COLOR_RED : COLOR_GREEN;
   _drawText(rightX + 2, startY + 12, opStatus, opColor, 1);
   
-  // Box 5: Network
-  _tft->fillRect(rightX, startY + boxHeight + boxSpacing, TFT_WIDTH/2 - 4, boxHeight, 0x0010);
-  _tft->drawRect(rightX, startY + boxHeight + boxSpacing, TFT_WIDTH/2 - 4, boxHeight, COLOR_CYAN);
-  _drawText(rightX + 2, startY + boxHeight + boxSpacing + 2, "NETWORK", COLOR_WHITE, 1);
-  _drawText(rightX + 2, startY + boxHeight + boxSpacing + 12, "F: " + _formatFloat(sensorData.frequency, 0) + "Hz", COLOR_WHITE, 1);
+  // Box 5: Network & WiFi
+  _tft->fillRect(rightX, startY + boxHeight + boxSpacing, TFT_WIDTH/2 - 3, boxHeight, 0x0010);
+  _tft->drawRect(rightX, startY + boxHeight + boxSpacing, TFT_WIDTH/2 - 3, boxHeight, COLOR_CYAN);
+  _drawText(rightX + 2, startY + boxHeight + boxSpacing + 2, "WiFi", WiFi.status() == WL_CONNECTED ? COLOR_GREEN : COLOR_RED, 1);
+  _drawText(rightX + 2, startY + boxHeight + boxSpacing + 12, String(WiFi.RSSI()) + "dBm", COLOR_CYAN, 1);
   
-  // Box 6: Configuration & ML
-  _tft->fillRect(rightX, startY + (boxHeight + boxSpacing) * 2, TFT_WIDTH/2 - 4, boxHeight, 0x0010);
-  _tft->drawRect(rightX, startY + (boxHeight + boxSpacing) * 2, TFT_WIDTH/2 - 4, boxHeight, COLOR_CYAN);
-  _drawText(rightX + 2, startY + (boxHeight + boxSpacing) * 2 + 2, "CONF: " + String(mlResult.confidence, 2), COLOR_WHITE, 1);
-  _drawText(rightX + 2, startY + (boxHeight + boxSpacing) * 2 + 12, "ML: " + String(mlResult.prediction, 2), COLOR_WHITE, 1);
+  // Box 6: ML & Confidence
+  _tft->fillRect(rightX, startY + (boxHeight + boxSpacing) * 2, TFT_WIDTH/2 - 3, boxHeight, 0x0010);
+  _tft->drawRect(rightX, startY + (boxHeight + boxSpacing) * 2, TFT_WIDTH/2 - 3, boxHeight, COLOR_CYAN);
+  _drawText(rightX + 2, startY + (boxHeight + boxSpacing) * 2 + 2, "ML:" + String(mlResult.prediction, 2), COLOR_WHITE, 1);
+  _drawText(rightX + 2, startY + (boxHeight + boxSpacing) * 2 + 12, "C:" + String(mlResult.confidence, 2), COLOR_YELLOW, 1);
   
-  // Additional Network Info Box
-  _tft->fillRect(leftX, startY + (boxHeight + boxSpacing) * 3, TFT_WIDTH - 4, boxHeight, 0x0010);
-  _tft->drawRect(leftX, startY + (boxHeight + boxSpacing) * 3, TFT_WIDTH - 4, boxHeight, COLOR_CYAN);
-  _drawText(leftX + 2, startY + (boxHeight + boxSpacing) * 3 + 2, "RSSI: " + String(WiFi.RSSI()) + " dBm", COLOR_CYAN, 1);
-  _drawText(leftX + 2, startY + (boxHeight + boxSpacing) * 3 + 12, "HEALTH: " + String(100 - (mlResult.prediction * 100), 0) + "%", COLOR_GREEN, 1);
+  // Bottom Row - Full width status bar
+  int bottomY = startY + (boxHeight + boxSpacing) * 3;
+  int bottomHeight = TFT_HEIGHT - bottomY - 2;
   
-  // Footer Bar
-  _tft->fillRect(0, TFT_HEIGHT - 15, TFT_WIDTH, 15, 0x001F);
-  _tft->drawRect(0, TFT_HEIGHT - 15, TFT_WIDTH, 15, COLOR_CYAN);
+  // System Status Bar
+  _tft->fillRect(leftX, bottomY, TFT_WIDTH - 4, bottomHeight, 0x0010);
+  _tft->drawRect(leftX, bottomY, TFT_WIDTH - 4, bottomHeight, COLOR_CYAN);
   
-  // Connection Type (left)
-  _drawText(2, TFT_HEIGHT - 13, "WiFi", WiFi.status() == WL_CONNECTED ? COLOR_GREEN : COLOR_RED, 1);
-  
-  // Time Display (center)
+  // Time Display (left)
   String timeStr = _getCurrentTime();
-  int timeWidth = timeStr.length() * 6;
-  int timeX = (TFT_WIDTH - timeWidth) / 2;
-  _drawText(timeX, TFT_HEIGHT - 13, timeStr, COLOR_WHITE, 1);
+  _drawText(leftX + 2, bottomY + 2, timeStr, COLOR_WHITE, 1);
   
-  // Alert Indicator (right)
+  // Session Info (center)
+  _drawText(leftX + 2, bottomY + 12, "ID:" + sessionId.substring(0, 8), COLOR_CYAN, 1);
+  
+  // Alert/Status Indicator (right)
   if (threatDetected) {
-    _tft->fillRect(TFT_WIDTH - 30, TFT_HEIGHT - 13, 28, 10, COLOR_RED);
-    _drawText(TFT_WIDTH - 28, TFT_HEIGHT - 12, "ALERT", COLOR_WHITE, 1);
+    _tft->fillRect(TFT_WIDTH - 35, bottomY + 2, 30, 10, COLOR_RED);
+    _drawText(TFT_WIDTH - 33, bottomY + 3, "ALERT", COLOR_WHITE, 1);
+  } else if (isCharging) {
+    _tft->fillRect(TFT_WIDTH - 25, bottomY + 2, 20, 10, COLOR_GREEN);
+    _drawText(TFT_WIDTH - 23, bottomY + 3, "CHG", COLOR_WHITE, 1);
   } else {
-    _drawText(TFT_WIDTH - 15, TFT_HEIGHT - 13, "OK", COLOR_GREEN, 1);
+    _drawText(TFT_WIDTH - 15, bottomY + 2, "IDLE", COLOR_GRAY, 1);
   }
   
   // Draw threat border if threat detected
