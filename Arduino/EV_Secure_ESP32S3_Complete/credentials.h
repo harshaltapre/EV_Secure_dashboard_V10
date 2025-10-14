@@ -1,4 +1,4 @@
-/*
+ /*
  * WiFi and API Credentials Configuration
  * Update these values for your specific setup
  */

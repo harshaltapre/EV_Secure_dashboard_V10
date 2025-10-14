@@ -37,8 +37,8 @@ const existingAdmins = [
   },
   {
     id: 2,
-    name: "John Smith",
-    email: "john.smith@evsecure.com",
+    name: "Harshal",
+    email: "harshaltapre26@gmail.com",
     role: "Admin",
     status: "active",
     lastLogin: "1 day ago",
