@@ -16,13 +16,16 @@
 // DASHBOARD API CONFIGURATION
 // ============================================================================
 // Primary dashboard URL and API key (ensure these match your deployed backend)
-#define DASHBOARD_URL "https://ev-secure-dashboard-v10.vercel.app"  // Your hosted dashboard URL (v10)
-#define API_KEY "vsr_st001_a1b2c3d4e5f6789012345678901234567890abcd"       // Your station API key (ST001)
+// v11 is the new primary dashboard, v10 is kept as an automatic fallback.
+#define DASHBOARD_URL "https://ev-secure-dashboard-v11.vercel.app"   // Primary hosted dashboard URL (v11)
+#define API_KEY "vsr_st001_a1b2c3d4e5f6789012345678901234567890abcd"
+#define API_KEY_2 "vsr_st001_a1b2c3d4e5f6789012345678901234567890abcd"  // Optional secondary key (currently unused)
 
 // Alternate dashboard URLs (used automatically as fallbacks in code)
-#define ALT_DASHBOARD_URL_1 "https://ev-secure-dashboard-v3.vercel.app"
-#define ALT_DASHBOARD_URL_2 "https://ev-secure-dashboard-v2-grf2.vercel.app"
-#define ALT_DASHBOARD_URL_3 "http://ev-secure-dashboard-v4.vercel.app"  // HTTP fallback (dev only)
+// These are tried when the primary URL is unreachable.
+#define ALT_DASHBOARD_URL_1 "https://ev-secure-dashboard-v10.vercel.app"   // Legacy v10 dashboard
+#define ALT_DASHBOARD_URL_2 "https://ev-secure-dashboard-v11.vercel.app/"  // Same v11 with trailing slash
+#define ALT_DASHBOARD_URL_3 "http://ev-secure-dashboard-v11.vercel.app"    // HTTP fallback (dev only)
 
 // ============================================================================
 // DEVICE CONFIGURATION
@@ -35,8 +38,8 @@
 // ALTERNATIVE WIFI NETWORKS (Backup)
 // ============================================================================
 // Uncomment and configure if you have backup networks
-// #define BACKUP_WIFI_SSID "backup_network"
-// #define BACKUP_WIFI_PASSWORD "backup_password"
+#define BACKUP_WIFI_SSID "IQOO Z9s 5G"
+#define BACKUP_WIFI_PASSWORD "hakunamatata"
 
 // ============================================================================
 // API ENDPOINTS
