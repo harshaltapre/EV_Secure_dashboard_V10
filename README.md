@@ -1,11 +1,4 @@
-# Vsora dashboard
 
-*Automatically synced with your [v0.dev](https://v0.dev) deployments*
-
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/harshaltetc22-9374s-projects/v0--dashboard)
-[![Built with v0](https://img.shields.io/badge/Built%20with-v0.dev-black?style=for-the-badge)](https://v0.dev/chat/projects/G5e6InOLyrP)
-
-## Overview
 
 This is the EV-Secure Dashboard - a comprehensive monitoring and control system for EV charging stations with ESP32-S3 integration.
 
