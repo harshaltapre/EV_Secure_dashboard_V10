@@ -81,6 +81,12 @@ The dashboard provides REST API endpoints for ESP32-S3 communication:
    - Use the provided test script: `python test_api_endpoints.py`
    - Monitor real-time data in the dashboard
    - Test threat detection and alerts# Megaproject-1
-# Megaproject-1
-# EV_secure_Dashboard_V4
-# EV_Secure_dashboard_V5
+## Screenshots
+
+![EV-Secure Dashboard](images/i.png)
+
+![Dashboard View 2](images/i2.png)
+
+![Dashboard View 3](images/i3.png)
+
+![Dashboard View 4](images/i4.png)
